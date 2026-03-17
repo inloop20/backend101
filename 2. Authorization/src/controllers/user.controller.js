@@ -17,13 +17,13 @@ export const getUserById = asyncHandler(async (req, res) => {
 export const updateCurrentUser = asyncHandler(async (req, res) => {
   const { username } = req.body;
   const { id } = req.user;
-  if (!id) throw new ApiError("invalid id", 400);
+
   const updatedUser = await prisma.user.update({
     where: { id },
     data: { username },
     select: { username: true, id: true },
   });
-  if (!updatedUser) throw new ApiError("update fail", 400);
+
   return res
     .status(200)
     .json(new ApiResponse(200, "username updated", updatedUser));
@@ -31,7 +31,7 @@ export const updateCurrentUser = asyncHandler(async (req, res) => {
 
 export const deleteCurrentUser = asyncHandler(async (req, res) => {
   const { id } = req.user;
-  if (!id) throw new ApiError("invalid id", 400);
+
   await prisma.user.delete({
     where: { id },
   });
@@ -40,16 +40,16 @@ export const deleteCurrentUser = asyncHandler(async (req, res) => {
 
 export const getUserBySearch = asyncHandler(async (req,res) => {
   const { username, email } = req.query;
-    
+    if (!username && !email)
+    throw new ApiError("Provide at least username or email to search", 400);
+
    const whereClause = username
     ? { username: { contains: username, mode: "insensitive" } }
     : { email: { contains: email, mode: "insensitive" } };
   
   const user = await prisma.user.findMany({
     where: 
-      whereClause
-      
-    ,
+      whereClause,
     take: 7,
     select: {
       id: true,
@@ -78,7 +78,7 @@ export const getUserWorkSpace = asyncHandler(async (req, res) => {
 
 export const getUserOrganizations = asyncHandler(async (req, res) => {
   const { id } = req.user;
-  if (!id) throw new ApiError("invalid id", 400);
+
   const organizations = await prisma.organizationMember.findMany({
     where: {
       userId: id,
@@ -94,7 +94,6 @@ export const getUserOrganizations = asyncHandler(async (req, res) => {
 
 export const getUserTeams = asyncHandler(async (req, res) => {
   const { id } = req.user;
-  if (!id) throw new ApiError("invalid id", 400);
   const teams = await prisma.teamMember.findMany({
     where: {
       userId: id,

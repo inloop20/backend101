@@ -29,7 +29,7 @@ userRouter.delete("/me", authenticate, deleteCurrentUser);
 userRouter.get(
   "/search",
   authenticate,
-  validate(searchUserSchema, "query"),
+  validate(searchUserSchema),
   getUserBySearch,
 );
 

@@ -32,8 +32,8 @@ model Organization {
 model OrganizationMember {
   userId         String
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  user           User         @relation(fields: [userId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id],onDelete:Cascade)
+  user           User         @relation(fields: [userId], references: [id],onDelete: Cascade)
 
   @@id([userId, organizationId])
 }
@@ -46,15 +46,15 @@ model Workspace {
   updated_at       DateTime          @updatedAt
   folders          Folder[]
   teams            Team[]
-  organization     Organization      @relation(fields: [organizationId], references: [id])
+  organization     Organization      @relation(fields: [organizationId], references: [id],onDelete: Cascade)
   workspace_member WorkspaceMember[]
 }
 
 model WorkspaceMember {
   userId      String
   workspaceId String
-  user        User      @relation(fields: [userId], references: [id])
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  user        User      @relation(fields: [userId], references: [id],onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id],onDelete: Cascade)
 
   @@id([userId, workspaceId])
 }
@@ -65,15 +65,15 @@ model Team {
   workspaceId String
   created_at  DateTime     @default(now())
   updated_at  DateTime     @updatedAt
-  workspace   Workspace    @relation(fields: [workspaceId], references: [id])
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id],onDelete: Cascade)
   team_member TeamMember[]
 }
 
 model TeamMember {
   userId String
   teamId String
-  team   Team   @relation(fields: [teamId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id],onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id],onDelete: Cascade)
 
   @@id([userId, teamId])
 }
@@ -86,9 +86,9 @@ model Folder {
   created_at     DateTime   @default(now())
   updated_at     DateTime   @updatedAt
   documents      Document[]
-  parentFolder   Folder?    @relation("FolderChildren", fields: [parentFolderId], references: [id])
+  parentFolder   Folder?    @relation("FolderChildren", fields: [parentFolderId], references: [id],onDelete: Cascade)
   subfolders     Folder[]   @relation("FolderChildren")
-  workspace      Workspace  @relation(fields: [workspaceId], references: [id])
+  workspace      Workspace  @relation(fields: [workspaceId], references: [id],onDelete: Cascade)
 }
 
 model Document {
@@ -99,7 +99,7 @@ model Document {
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   comments   Comment[]
-  folder     Folder    @relation(fields: [folderId], references: [id])
+  folder     Folder    @relation(fields: [folderId], references: [id],onDelete: Cascade)
 }
 
 model Comment {
@@ -109,6 +109,6 @@ model Comment {
   documentId String
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-  author     User     @relation(fields: [authorId], references: [id])
-  document   Document @relation(fields: [documentId], references: [id])
+  author     User     @relation(fields: [authorId], references: [id],onDelete: Cascade)
+  document   Document @relation(fields: [documentId], references: [id],onDelete: Cascade)
 }

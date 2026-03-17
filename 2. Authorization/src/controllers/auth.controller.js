@@ -67,7 +67,7 @@ export const login = asyncHandler(async (req, res) => {
     .status(200)
     .json(
       new ApiResponse(200, "logged in successfully", {
-        user: { username: isUserExist.username },
+        user: { username: isUserExist.username,id:isUserExist.id },
       }),
     );
 });
