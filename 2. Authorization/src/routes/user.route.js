@@ -1,5 +1,4 @@
 import express from "express";
-import authenticate from "../middleware/auth.middleware.js";
 import validate from "../middleware/validate.middleware.js";
 import {
   getUserById,
@@ -15,30 +14,18 @@ import { usernameSchema, searchUserSchema } from "../schema/user.schema.js";
 
 const userRouter = express.Router();
 
+userRouter.patch("/me", validate(usernameSchema), updateCurrentUser);
 
+userRouter.delete("/me", deleteCurrentUser);
 
-userRouter.patch(
-  "/me",
-  authenticate,
-  validate(usernameSchema),
-  updateCurrentUser,
-);
+userRouter.get("/search", validate(searchUserSchema), getUserBySearch);
 
-userRouter.delete("/me", authenticate, deleteCurrentUser);
+userRouter.get("/workspaces", getUserWorkSpace);
 
-userRouter.get(
-  "/search",
-  authenticate,
-  validate(searchUserSchema),
-  getUserBySearch,
-);
+userRouter.get("/teams", getUserTeams);
 
-userRouter.get("/workspaces", authenticate, getUserWorkSpace);
+userRouter.get("/organizations", getUserOrganizations);
 
-userRouter.get("/teams", authenticate, getUserTeams);
-
-userRouter.get("/organizations", authenticate, getUserOrganizations);
-
-userRouter.get("/:id", authenticate, getUserById);
+userRouter.get("/:id", getUserById);
 
 export default userRouter;

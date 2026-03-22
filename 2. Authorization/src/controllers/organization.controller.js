@@ -32,7 +32,7 @@ export const createOrganization = asyncHandler(async (req, res) => {
 });
 
 export const getOrganizationById = asyncHandler(async (req, res) => {
-  const id = req.params.id;
+  const {id} = req.params;
   if (!id) throw new ApiError("organization id is required", 400);
 
   const organization = await prisma.organization.findUnique({
