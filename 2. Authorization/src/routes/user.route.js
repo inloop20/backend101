@@ -33,11 +33,11 @@ userRouter.get(
   getUserBySearch,
 );
 
-userRouter.get("/workspace", authenticate, getUserWorkSpace);
+userRouter.get("/workspaces", authenticate, getUserWorkSpace);
 
-userRouter.get("/team", authenticate, getUserTeams);
+userRouter.get("/teams", authenticate, getUserTeams);
 
-userRouter.get("/organization", authenticate, getUserOrganizations);
+userRouter.get("/organizations", authenticate, getUserOrganizations);
 
 userRouter.get("/:id", authenticate, getUserById);
 

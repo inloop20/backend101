@@ -82,9 +82,15 @@ export const getUserOrganizations = asyncHandler(async (req, res) => {
   const organizations = await prisma.organizationMember.findMany({
     where: {
       userId: id,
-    },
-    include: {
-      organization: true,
+    },select: {
+      userId:true,
+      organization: {
+        select: {
+          id: true,
+          name: true,
+          created_at: true,
+        },
+      },
     },
   });
   return res

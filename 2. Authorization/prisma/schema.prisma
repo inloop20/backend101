@@ -9,7 +9,7 @@ datasource db {
 
 model User {
   id                  String               @id @default(uuid())
-  username            String
+  username            String                @unique
   email               String               @unique
   password            String
   created_at          DateTime             @default(now())
@@ -22,7 +22,7 @@ model User {
 
 model Organization {
   id                  String               @id @default(uuid())
-  name                String
+  name                String               @unique
   created_at          DateTime             @default(now())
   updated_at          DateTime             @updatedAt
   organization_member OrganizationMember[]
@@ -48,6 +48,7 @@ model Workspace {
   teams            Team[]
   organization     Organization      @relation(fields: [organizationId], references: [id],onDelete: Cascade)
   workspace_member WorkspaceMember[]
+  @@unique([organizationId,name])
 }
 
 model WorkspaceMember {
@@ -67,6 +68,7 @@ model Team {
   updated_at  DateTime     @updatedAt
   workspace   Workspace    @relation(fields: [workspaceId], references: [id],onDelete: Cascade)
   team_member TeamMember[]
+  @@unique([workspaceId,name])
 }
 
 model TeamMember {
@@ -89,6 +91,8 @@ model Folder {
   parentFolder   Folder?    @relation("FolderChildren", fields: [parentFolderId], references: [id],onDelete: Cascade)
   subfolders     Folder[]   @relation("FolderChildren")
   workspace      Workspace  @relation(fields: [workspaceId], references: [id],onDelete: Cascade)
+  @@unique([workspaceId, parentFolderId, name])
+ 
 }
 
 model Document {
@@ -100,6 +104,7 @@ model Document {
   updated_at DateTime  @updatedAt
   comments   Comment[]
   folder     Folder    @relation(fields: [folderId], references: [id],onDelete: Cascade)
+  @@unique([folderId,title])
 }
 
 model Comment {

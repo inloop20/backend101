@@ -1,16 +1,19 @@
-import ApiError from '../utils/ApiError.js';
+import  ApiError  from "../utils/ApiError.js";
 
-const validate = (schema) => (req,res,next) => {
+const validate = (schema) => {
+  return (req, res, next) => {
     const result = schema.safeParse(req.body);
-    if(!result.success){
-        const error = result.error.issues.map((e)=>({
-            path:e.path.join(","),
-            message:e.message
-    }))
-    throw new ApiError(`Validation failed: ${JSON.stringify(error)}`, 400); 
+    if (!result.success) {
+      const errors = result.error.issues.map((s)=> ({
+        path:s.path.join("."),
+        error: s.message
+      }));
+   
+      return next(new ApiError('Validation failed',400,errors));
     }
     req.body = result.data;
     next();
-}
+  };
+};
 
 export default validate;
