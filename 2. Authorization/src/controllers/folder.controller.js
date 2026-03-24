@@ -35,6 +35,31 @@ export const createFolder = asyncHandler(async (req, res) => {
       created_at: true,
     },
   });
+
+    const writes = [
+    {
+      user: `user:${userId}`,
+      relation: "creator",
+      object: `folder:${newFolder.id}`,
+    },
+  ];
+
+  if (parentFolderId) {
+    writes.push({
+      user: `folder:${parentFolderId}`,
+      relation: "parent",
+      object: `folder:${newFolder.id}`,
+    });
+  } else {
+    writes.push({
+      user: `workspace:${workspaceId}`,
+      relation: "parent",
+      object: `folder:${newFolder.id}`,
+    });
+  }
+
+  await fgaClient.write({ writes });
+
   return res
     .status(201)
     .json(new ApiResponse(201, "folder created", newFolder));
@@ -63,18 +88,6 @@ export const updateFolder = asyncHandler(async (req, res) => {
   if (!folderId) throw new ApiError("folder id is required", 400);
   const { name } = req.body;
 
-  const exists = await prisma.folder.findFirst({
-    where: {
-      workspaceId,
-      parentFolderId: parentFolderId ?? null,
-      name,
-      id: { not: folderId },
-    },
-  });
-
-  if (exists) {
-    throw new ApiError("Folder already exists", 409);
-  }
   const updatedFolder = await prisma.folder.update({
     where: { id: folderId },
     data: {
@@ -93,6 +106,11 @@ export const deleteFolder = asyncHandler(async (req, res) => {
 
   await prisma.folder.delete({
     where: { id: folderId },
+  });
+
+  await fgaClient.deleteObject({
+    type: "folder",
+    id: folderId,
   });
 
   return res

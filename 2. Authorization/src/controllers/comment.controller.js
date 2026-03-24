@@ -43,5 +43,19 @@ export const getComments = asyncHandler(async(req,res) =>{
         id:true
     },orderBy:{created_at:'asc'}
   })
+
+  await fgaClient.write({
+    writes: [{
+        user: `user:${req.user.id}`,
+        relation: "creator",
+        object: `comment:${comment.id}`,
+      },
+      {
+        user: `document:${documentId}`,
+        relation: "parent",
+        object: `comment:${comment.id}`,
+      },
+    ],
+  });
   return res.status(200).json(new ApiResponse(200,'comments fetched',comments));
 })

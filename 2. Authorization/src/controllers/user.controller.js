@@ -67,8 +67,14 @@ export const getUserWorkSpace = asyncHandler(async (req, res) => {
     where: {
       userId: id,
     },
-    include: {
-      workspace: true,
+     select: {
+      workspace: {
+        select: {
+          id: true,
+          name: true,
+          organizationId: true,
+        },
+      },
     },
   });
   return res
@@ -98,15 +104,3 @@ export const getUserOrganizations = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "organizations fetched", organizations));
 });
 
-export const getUserTeams = asyncHandler(async (req, res) => {
-  const { id } = req.user;
-  const teams = await prisma.teamMember.findMany({
-    where: {
-      userId: id,
-    },
-    include: {
-      team: true,
-    },
-  });
-  return res.status(200).json(new ApiResponse(200, "teams fetched", teams));
-});

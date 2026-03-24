@@ -6,7 +6,6 @@ import {
   deleteCurrentUser,
   getUserBySearch,
   getUserWorkSpace,
-  getUserTeams,
   getUserOrganizations,
 } from "../controllers/user.controller.js";
 
@@ -22,7 +21,6 @@ userRouter.get("/search", validate(searchUserSchema), getUserBySearch);
 
 userRouter.get("/workspaces", getUserWorkSpace);
 
-userRouter.get("/teams", getUserTeams);
 
 userRouter.get("/organizations", getUserOrganizations);
 

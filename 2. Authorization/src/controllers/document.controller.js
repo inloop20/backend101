@@ -23,7 +23,19 @@ export const createDocument = asyncHandler(async (req, res) => {
       created_at: true,
     },
   });
-
+   await fgaClient.write({
+    writes: [{
+        user: `user:${req.user.id}`,
+        relation: "creator",
+        object: `document:${document.id}`,
+      },
+      {
+        user: `folder:${folderId}`,
+        relation: "parent",
+        object: `document:${document.id}`,
+      },
+    ],
+  });
   return res
     .status(201)
     .json(new ApiResponse(201, "document created", document));
@@ -85,7 +97,10 @@ export const deleteDocument = asyncHandler(async (req, res) => {
   await prisma.document.delete({
     where: { id: documentId },
   });
-
+   await fgaClient.deleteObject({
+    type: "document",
+    id: documentId,
+  });
   return res
     .status(200)
     .json(new ApiResponse(200, "document deleted", { documentId }));

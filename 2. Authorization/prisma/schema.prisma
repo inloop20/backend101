@@ -16,7 +16,6 @@ model User {
   updated_at          DateTime             @updatedAt
   comments            Comment[]
   organization_member OrganizationMember[]
-  team_member         TeamMember[]
   workspace_member    WorkspaceMember[]
 }
 
@@ -32,6 +31,7 @@ model Organization {
 model OrganizationMember {
   userId         String
   organizationId String
+  role           String @default("member")
   organization   Organization @relation(fields: [organizationId], references: [id],onDelete:Cascade)
   user           User         @relation(fields: [userId], references: [id],onDelete: Cascade)
 
@@ -45,7 +45,6 @@ model Workspace {
   created_at       DateTime          @default(now())
   updated_at       DateTime          @updatedAt
   folders          Folder[]
-  teams            Team[]
   organization     Organization      @relation(fields: [organizationId], references: [id],onDelete: Cascade)
   workspace_member WorkspaceMember[]
   @@unique([organizationId,name])
@@ -60,25 +59,6 @@ model WorkspaceMember {
   @@id([userId, workspaceId])
 }
 
-model Team {
-  id          String       @id @default(uuid())
-  name        String
-  workspaceId String
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
-  workspace   Workspace    @relation(fields: [workspaceId], references: [id],onDelete: Cascade)
-  team_member TeamMember[]
-  @@unique([workspaceId,name])
-}
-
-model TeamMember {
-  userId String
-  teamId String
-  team   Team   @relation(fields: [teamId], references: [id],onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id],onDelete: Cascade)
-
-  @@id([userId, teamId])
-}
 
 model Folder {
   id             String     @id @default(uuid())

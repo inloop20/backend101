@@ -35,6 +35,11 @@ export const deleteWorkspace = asyncHandler(async (req, res) => {
   const { id } = req.params;
   if (!id) throw new ApiError("workspace id is required", 400);
   await prisma.workspace.delete({ where: { id } });
+
+    await fgaClient.deleteObject({
+    type: "workspace",
+    id,
+  });
   return res
     .status(200)
     .json(new ApiResponse(200, "workspace deleted", { id }));
@@ -42,7 +47,7 @@ export const deleteWorkspace = asyncHandler(async (req, res) => {
 
 export const addMember = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { userId, role } = req.body;
+  const { userId } = req.body;
 
   if (!id) throw new ApiError("workspace id is required", 400);
 
@@ -60,6 +65,15 @@ export const addMember = asyncHandler(async (req, res) => {
       },
       workspaceId: true,
     },
+  });
+   await fgaClient.write({
+    writes: [
+      {
+        user: `user:${userId}`,
+        relation: "member",
+        object: `workspace:${id}`,
+      },
+    ],
   });
   return res.status(201).json(new ApiResponse(201, "member added", userAdded));
 });
@@ -104,6 +118,22 @@ export const removeMember = asyncHandler(async (req, res) => {
       userId_workspaceId: { userId, workspaceId:id },
     },
   });
+
+   await fgaClient.write({
+    deletes: [
+      {
+        user: `user:${userId}`,
+        relation: "member",
+        object: `workspace:${id}`,
+      },
+      {
+        user: `user:${userId}`,
+        relation: "admin",
+        object: `workspace:${id}`,
+      },
+    ],
+  });
+ 
   return res
     .status(200)
     .json(new ApiResponse(200, "member remove", { workspaceId: id, userId }));
@@ -112,5 +142,29 @@ export const removeMember = asyncHandler(async (req, res) => {
 export const updateMemberRole = asyncHandler(async (req, res) => {
   const { id, userId } = req.params;
   const { role } = req.body;
-  //todo: update role
+
+   await fgaClient.write({
+    deletes: [
+      {
+        user: `user:${userId}`,
+        relation: "admin",
+        object: `workspace:${id}`,
+      },
+      {
+        user: `user:${userId}`,
+        relation: "member",
+        object: `workspace:${id}`,
+      },
+    ],
+    writes: [
+      {
+        user: `user:${userId}`,
+        relation: role,
+        object: `workspace:${id}`,
+      },
+    ],
+  });
+ 
+
+  return res.status(200).json(new ApiResponse(200, `Role updated to ${role}`, { userId, role }));
 });
