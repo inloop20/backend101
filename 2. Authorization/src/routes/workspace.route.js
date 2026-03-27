@@ -1,8 +1,10 @@
 import express from "express";
 import {
   addMember,
+  createWorkspace,
   deleteWorkspace,
   getMembers,
+  getMyWorkspaces,
   getWorkspaceById,
   removeMember,
   updateMemberRole,
@@ -16,67 +18,57 @@ import {
 } from "../schema/workspace.schema.js";
 
 import validate from "../middleware/validate.middleware.js";
-import { createFolder, getFolders } from "../controllers/folder.controller.js";
-
-import { createFolderSchema } from "../schema/folder.schema.js";
 import { checkPermission } from "../middleware/authz.middleware.js";
 
-export const workspaceRouter = express.Router();
+const workspaceRouter = express.Router();
+
+workspaceRouter.post("/organization/:orgId",validate(nameSchema),checkPermission("admin", "organization", "orgId"),createWorkspace);
+
+workspaceRouter.get("/organization/:orgId",checkPermission("member", "organization", "orgId"),getMyWorkspaces);
 
 workspaceRouter.get(
   "/:id/members",
-  checkPermission("can_view", "workspace", "id"),
+  checkPermission("member", "workspace", "id"),
   getMembers,
 );
 
 workspaceRouter.post(
   "/:id/members",
-  checkPermission("can_manage", "workspace", "id"),
   validate(addMemberSchema),
+  checkPermission("admin", "workspace", "id"),
   addMember,
 );
 
 workspaceRouter.patch(
   "/:id/members/:userId",
-  checkPermission("can_manage", "workspace", "id"),
   validate(UpdateMemberRoleSchema),
+  checkPermission("admin", "workspace", "id"),
   updateMemberRole,
 );
 
 workspaceRouter.delete(
   "/:id/members/:userId",
-  checkPermission("can_manage", "workspace", "id"),
+  checkPermission("admin", "workspace", "id"),
   removeMember,
 );
 
 workspaceRouter.get(
   "/:id",
-  checkPermission("can_view", "workspace", "id"),
+  checkPermission("member", "workspace", "id"),
   getWorkspaceById,
 );
 
 workspaceRouter.patch(
   "/:id",
-  checkPermission("can_manage", "workspace", "id"),
   validate(nameSchema),
+  checkPermission("admin", "workspace", "id"),
   updateWorkspace,
 );
 
 workspaceRouter.delete(
   "/:id",
-  checkPermission("can_manage", "workspace", "id"),
+  checkPermission("admin", "workspace", "id"),
   deleteWorkspace,
 );
 
-workspaceRouter.post(
-  "/:id/folder",
-  checkPermission("can_manage", "workspace", "id"),
-  validate(createFolderSchema),
-  createFolder,
-);
-
-workspaceRouter.get(
-  "/:id/folders",
-  checkPermission("can_view", "workspace", "id"),
-  getFolders,
-);
+export default workspaceRouter

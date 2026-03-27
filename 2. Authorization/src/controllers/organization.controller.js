@@ -14,6 +14,7 @@ export const createOrganization = asyncHandler(async (req, res) => {
       organization_member: {
         create: {
           userId,
+          role:'admin'
         },
       },
     },
@@ -23,13 +24,9 @@ export const createOrganization = asyncHandler(async (req, res) => {
     },
   });
 
-  await fgaClient.writeTuples([
-  {
-    user: `user:${userId}`,
-    relation: "owner",
-    object: `organization:${org.id}`,
-  },
-]);
+ await fgaClient.write({
+    writes: [{ user: `user:${userId}`, relation: 'admin', object: `organization:${org.id}` }]
+  });
  
   res.status(201).json(new ApiResponse(201, "Organization created", org));
 });
@@ -65,17 +62,14 @@ export const addUser = asyncHandler(async (req, res) => {
     data: {
       organizationId: id,
       userId: userId,
+      role:'member'
     },
     select: { organizationId: true, userId: true },
   });
 
-    await fgaClient.writeTuples([
-    {
-      user: `user:${userId}`,
-      relation: "member",
-      object: `organization:${id}`,
-    },
-  ]);
+  await fgaClient.write({
+    writes: [{ user: `user:${userId}`, relation: 'member', object: `organization:${id}` }]
+  });
 
   return res.status(201).json(new ApiResponse(201, "user joined", userJoined));
 });
@@ -87,7 +81,7 @@ export const getOrganizationMembers = asyncHandler(async (req, res) => {
     where: {
       organizationId: id,
     },
-    select: { userId: true, user: { select: { username: true } } },
+    select: { userId: true, role:true,user: { select: { username: true } } },
   });
   return res
     .status(200)
@@ -99,10 +93,6 @@ export const deleteOrganization = asyncHandler(async (req, res) => {
   if (!id) throw new ApiError("organization id is required", 400);
   await prisma.organization.delete({
     where: { id },
-  });
- await fgaClient.deleteObject({
-    type: "organization",
-    id,
   });
   return res
     .status(200)
@@ -123,21 +113,15 @@ export const updateOrganization = asyncHandler(async (req, res) => {
 
 export const removeMember = asyncHandler(async (req, res) => {
   const { id, userId } = req.params;
-  await prisma.organizationMember.delete({
-    where: { userId_organizationId: { userId, organizationId: id } },
-    select: { role:true },
+  const deletedMember = await prisma.organizationMember.delete({
+    where: { userId_organizationId: { userId, organizationId: id } },select:{role:true}
   });
 
 
-   await fgaClient.deleteTuples({
-    user: `user:${userId}`,
-    relation: 'admin',
-    object: `organization:${id}`,
-  });
-   await fgaClient.deleteTuples({
-    user: `user:${userId}`,
-    relation: 'member',
-    object: `organization:${id}`,
+  await fgaClient.write({
+    deletes: [
+      { user: `user:${userId}`, relation: deletedMember.role, object: `organization:${id}` }
+    ]
   });
   
   return res
@@ -151,75 +135,44 @@ export const updateMemberRole = asyncHandler(async (req, res) => {
     throw new ApiError("organization and user id is required", 400);
 
   const { role } = req.body;
-
-
   
-    await fgaClient.write({
+ const existing = await prisma.organizationMember.findUnique({
+  where: {
+    userId_organizationId: { userId, organizationId: id }
+  }
+});
+
+if (!existing) throw new ApiError("member not found", 404);
+
+if (existing.role === role) {
+  return res.json(new ApiResponse(200, "role already up to date"));
+}
+
+await prisma.organizationMember.update({
+  where: {
+    userId_organizationId: { userId, organizationId: id }
+  },
+  data: { role }
+});
+
+await fgaClient.write({
   deletes: [
-    { user: `user:${userId}`, relation: "admin", object: `organization:${id}` },
-    { user: `user:${userId}`, relation: "member", object: `organization:${id}` },
+    {
+      user: `user:${userId}`,
+      relation: existing.role, 
+      object: `organization:${id}`
+    }
   ],
   writes: [
-    { user: `user:${userId}`, relation: role, object: `organization:${id}` },
-  ],
+    {
+      user: `user:${userId}`,
+      relation: role,
+      object: `organization:${id}`
+    }
+  ]
 });
-  
   return res
     .status(200)
     .json(new ApiResponse(200, "role updated", { id, userId, role }));
 });
 
-export const createWorkspace = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { name } = req.body;
-  if (!id) throw new ApiError("invalid organization id", 400);
-
-  const workspace = await prisma.workspace.create({
-    data: {
-      name,
-      organizationId: id,
-      workspace_member: {
-        create: {
-          userId: req.user.id,
-        },
-      },
-    },
-    select: {
-      id: true,
-      name: true,
-    },
-  });
-    await fgaClient.writeTuples([
-    {
-      user: `user:${userId}`,
-      relation: "member",
-      object: `workspace:${workspace.id}`,
-    },
-  ]);
- 
-  return res
-    .status(201)
-    .json(new ApiResponse(201, "workspace created", workspace));
-});
-
-export const getWorkspaces = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  if (!id) throw new ApiError("invalid organization id", 400);
-  const workspaces = await prisma.workspace.findMany({
-    where: {
-      organizationId: id,
-      workspace_member: {
-        some: {
-          userId,
-        },
-      },
-    },
-    select: {
-      id: true,
-      name: true,
-    },
-  });
-  return res
-    .status(200)
-    .json(new ApiResponse(200, "workspace fetched", workspaces));
-});

@@ -31,7 +31,7 @@ model Organization {
 model OrganizationMember {
   userId         String
   organizationId String
-  role           String @default("member")
+  role           String 
   organization   Organization @relation(fields: [organizationId], references: [id],onDelete:Cascade)
   user           User         @relation(fields: [userId], references: [id],onDelete: Cascade)
 
@@ -53,6 +53,7 @@ model Workspace {
 model WorkspaceMember {
   userId      String
   workspaceId String
+  role        String
   user        User      @relation(fields: [userId], references: [id],onDelete: Cascade)
   workspace   Workspace @relation(fields: [workspaceId], references: [id],onDelete: Cascade)
 

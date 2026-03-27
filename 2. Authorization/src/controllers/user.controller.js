@@ -11,6 +11,7 @@ export const getUserById = asyncHandler(async (req, res) => {
     select: { id: true, username: true, email: true },
   });
   if (!user) throw new ApiError("User not found", 404);
+  
   return res.status(200).json(new ApiResponse(200, "user found", user));
 });
 
@@ -68,6 +69,7 @@ export const getUserWorkSpace = asyncHandler(async (req, res) => {
       userId: id,
     },
      select: {
+      role:true,
       workspace: {
         select: {
           id: true,
@@ -89,7 +91,7 @@ export const getUserOrganizations = asyncHandler(async (req, res) => {
     where: {
       userId: id,
     },select: {
-      userId:true,
+      role:true,
       organization: {
         select: {
           id: true,

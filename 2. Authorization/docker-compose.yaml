@@ -9,7 +9,7 @@ services:
     networks:
       - openfga
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
@@ -52,3 +52,17 @@ services:
       - "8081:8081"
       # Needed for the playground (Do not enable in prod!)
       - "3000:3000"
+  
+  opendoc-db:
+    image: postgres:16.2
+    container_name: postgres-app
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=opendoc
+      - POSTGRES_PASSWORD=opendocpass
+      - POSTGRES_DB=opendocdb
+    volumes:
+      - opendoc_pgdata:/var/lib/postgresql/data
+volumes:
+  opendoc_pgdata:

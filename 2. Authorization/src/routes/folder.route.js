@@ -1,37 +1,65 @@
 import express from "express";
-import { deleteFolder, getDocumentsByFolder, updateFolder } from "../controllers/folder.controller.js";
-import { createDocument } from "../controllers/document.controller.js";
+import { createFolder, deleteFolder, getFolderContents, getFolders, moveFolder, revokeFolderAccess, shareFolder, updateFolder } from "../controllers/folder.controller.js";
 import validate from "../middleware/validate.middleware.js";
-import { updateFolderSchema } from "../schema/folder.schema.js";
-import { createDocumentSchema } from "../schema/document.schema.js";
+import { createFolderSchema, moveFolderSchema, shareFolderSchema, updateFolderSchema } from "../schema/folder.schema.js";
 import { checkPermission } from "../middleware/authz.middleware.js";
 
 const folderRouter = express.Router();
 
+folderRouter.get(
+  "/workspace/:workspaceId",
+  checkPermission("member", "workspace", "workspaceId"),
+  getFolders,
+);
+
+folderRouter.post(
+  "/:folderId/share", 
+  validate(shareFolderSchema),
+  checkPermission("editor", "folder", "folderId"), 
+  shareFolder
+);
+
+folderRouter.delete(
+  "/:folderId/share/:userId", 
+  checkPermission("editor", "folder", "folderId"), 
+  revokeFolderAccess
+);
+
+
+folderRouter.put(
+  "/:folderId/move",
+  validate(moveFolderSchema),
+  checkPermission("editor","folder","folderId"),
+  moveFolder
+);
 folderRouter.patch(
   "/:folderId",
-  checkPermission("can_manage", "folder", "folderId"),
   validate(updateFolderSchema),
+  checkPermission("editor", "folder", "folderId"),
   updateFolder
 );
 
 folderRouter.delete(
   "/:folderId",
-  checkPermission("can_manage", "folder", "folderId"),
+  checkPermission("editor", "folder", "folderId"),
   deleteFolder
 );
 
 folderRouter.get(
   "/:folderId",
-  checkPermission("can_view", "folder", "folderId"),
-  getDocumentsByFolder
+  checkPermission("viewer", "folder", "folderId"),
+  getFolderContents
 );
 
 folderRouter.post(
-  "/:folderId/documents",
-  checkPermission("can_manage", "folder", "folderId"),
-  validate(createDocumentSchema),
-  createDocument
+  "/workspace/:workspaceId",
+  validate(createFolderSchema),
+  checkPermission("member", "workspace", "workspaceId"),
+  createFolder,
 );
+
+
+
+
 
 export default folderRouter;

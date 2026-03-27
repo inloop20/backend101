@@ -1,51 +1,57 @@
 import express from 'express';
-import { deleteDocument, getDocument, updateDocument } from '../controllers/document.controller.js';
+import { createDocument, deleteDocument, getDocument, revokeDocAccess, shareDocument, updateDocument } from '../controllers/document.controller.js';
 import validate from '../middleware/validate.middleware.js';
-import {updateDocumentSchema} from '../schema/document.schema.js'
+import {createDocumentSchema, memberSchema, updateDocumentSchema} from '../schema/document.schema.js'
 import { createComment, getComments } from '../controllers/comment.controller.js';
-
-import {
-  deleteDocument,
-  getDocument,
-  updateDocument,
-} from "../controllers/document.controller.js";
-
-import validate from "../middleware/validate.middleware.js";
-import { updateDocumentSchema } from "../schema/document.schema.js";
-
-import { createComment, getComments } from '../controllers/comment.controller.js'
-
 import { checkPermission } from "../middleware/authz.middleware.js";
 
 const documentRouter = express.Router();
 
-
-documentRouter.get('/:documentId',checkPermission("can_view", "document", "documentId"),getDocument)
-
-documentRouter.patch(
-  "/:documentId",
-  checkPermission("can_manage", "document", "documentId"),
-  validate(updateDocumentSchema),
-  updateDocument
+documentRouter.post(
+  "/:documentId/share", 
+  validate(memberSchema),
+  checkPermission("editor", "document", "documentId"), 
+  shareDocument
 );
 
 documentRouter.delete(
-  "/:documentId",
-  checkPermission("can_manage", "document", "documentId"),
-  deleteDocument
+  "/:documentId/share/:userId", 
+  checkPermission("editor", "document", "documentId"), 
+  revokeDocAccess
 );
 
+documentRouter.post(
+  "/folder/:folderId",
+  validate(createDocumentSchema),
+  checkPermission("editor", "folder", "folderId"),
+  createDocument
+);
 
 documentRouter.get(
   "/:documentId/comments",
-  checkPermission("can_view", "document", "documentId"),
+  checkPermission("viewer", "document", "documentId"),
   getComments
 );
 
 documentRouter.post(
   "/:documentId/comments",
-  checkPermission("can_view", "document", "documentId"),
+  checkPermission("viewer", "document", "documentId"),
   createComment
+);
+
+documentRouter.get('/:documentId',checkPermission("viewer", "document", "documentId"),getDocument)
+
+documentRouter.patch(
+  "/:documentId",
+  validate(updateDocumentSchema),
+  checkPermission("editor", "document", "documentId"),
+  updateDocument
+);
+
+documentRouter.delete(
+  "/:documentId",
+  checkPermission("editor", "document", "documentId"),
+  deleteDocument
 );
 
 export default documentRouter;

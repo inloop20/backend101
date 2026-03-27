@@ -17,8 +17,4 @@ export const UpdateMemberRoleSchema = z.object({
 
 export const addMemberSchema = z.object({
   userId : z.uuid('userId is required'),
-  role: z.enum(["admin", "editor", "member"], {
-    required_error: "Role is required",
-    invalid_type_error: "Invalid role",
-  })
 })

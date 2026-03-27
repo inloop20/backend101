@@ -5,12 +5,12 @@ const checkPermission = (relation, objectType, paramName) => {
     try {
       const userId = req.user.id;
       const objectId = req.params[paramName];
-
       const { allowed } = await fgaClient.check({
         user: `user:${userId}`,
         relation: relation,
         object: `${objectType}:${objectId}`,
       });
+      
 
       if (!allowed) {
         throw new ApiError('Unauthorized access',403);
@@ -18,7 +18,7 @@ const checkPermission = (relation, objectType, paramName) => {
 
       next();
     } catch (error) {
-       throw new ApiError('Authorization check fail');
+      next(error)
     }
   };
 };

@@ -11,3 +11,8 @@ export const updateDocumentSchema = z.object({
 
   content: z.string().optional(),
 });
+
+export const memberSchema = z.object({
+  email: z.email('invalid email'), 
+  role: z.enum(["admin", "editor", "member"]),
+});
