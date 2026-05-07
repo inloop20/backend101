@@ -35,11 +35,11 @@ export const register = asyncHandler(async (req, res) => {
 });
 
 export const login = asyncHandler(async (req, res) => {
-  const { username, email, password } = req.body;
+  const { email, password } = req.body;
 
   const isUserExist = await prisma.user.findFirst({
     where: {
-      OR: [{ username }, { email }],
+      email 
     },
     select: { username: true, password: true, id: true },
   });

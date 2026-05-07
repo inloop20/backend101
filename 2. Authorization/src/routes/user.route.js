@@ -9,7 +9,7 @@ import {
   getUserOrganizations,
 } from "../controllers/user.controller.js";
 
-import { usernameSchema, searchUserSchema } from "../schema/user.schema.js";
+import { usernameSchema, searchUserSchema } from "../../../shared/index.js";
 
 const userRouter = express.Router();
 

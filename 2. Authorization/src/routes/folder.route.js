@@ -1,7 +1,7 @@
 import express from "express";
 import { createFolder, deleteFolder, getFolderContents, getFolders, moveFolder, revokeFolderAccess, shareFolder, updateFolder } from "../controllers/folder.controller.js";
 import validate from "../middleware/validate.middleware.js";
-import { createFolderSchema, moveFolderSchema, shareFolderSchema, updateFolderSchema } from "../schema/folder.schema.js";
+import { createFolderSchema, moveFolderSchema, shareFolderSchema, updateFolderSchema } from "../../../shared/index.js";
 import { checkPermission } from "../middleware/authz.middleware.js";
 
 const folderRouter = express.Router();

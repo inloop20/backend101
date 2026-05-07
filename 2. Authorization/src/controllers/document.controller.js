@@ -8,19 +8,17 @@ export const createDocument = asyncHandler(async (req, res) => {
   const { folderId } = req.params;
   if (!folderId) throw new ApiError("folder id is required", 400);
 
-  const { title, content } = req.body;
+  const { title } = req.body;
 
   const document = await prisma.document.create({
     data: {
       title,
-      content,
+      content:'',
       folderId,
     },
     select: {
       id: true,
       title: true,
-      content: true,
-      folderId: true,
       created_at: true,
     },
   });
@@ -47,8 +45,8 @@ export const getDocument = asyncHandler(async (req, res) => {
     where: { id: documentId },
     select: {
       id: true,
-      folderId: true,
       title: true,
+      content: true,
       created_at: true,
       updated_at: true,
     },
@@ -110,8 +108,6 @@ export const deleteDocument = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "document deleted", { documentId }));
 });
 
-
-
 export const shareDocument = asyncHandler(async (req, res) => {
   const { documentId } = req.params;
   const { email, role } = req.body; 
@@ -152,4 +148,31 @@ if (deletes.length > 0) {
   return res.status(200).json(new ApiResponse(200, "External access revoked"));
 });
 
+export const getDocumentPermissions = asyncHandler(
+  async (req, res) => {
+    const userId = req.user.id;
+    const { documentId } = req.params;
 
+    if (!documentId) {
+      throw new ApiError("document id is required", 400);
+    }
+
+    const canEdit = await fgaClient.check({
+      user: `user:${userId}`,
+      relation: "editor",
+      object: `document:${documentId}`,
+    });
+
+    const permissions = {
+      canEdit: canEdit.allowed,
+    };
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "document permissions fetched",
+        permissions
+      )
+    );
+  }
+);

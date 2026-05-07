@@ -42,6 +42,7 @@ export const getOrganizationById = asyncHandler(async (req, res) => {
     select: {
       id: true,
       name: true,
+      _count:{select:{organization_member:true}}
     },
   });
 
@@ -53,25 +54,50 @@ export const getOrganizationById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "organization fetched", organization));
 });
 
-export const addUser = asyncHandler(async (req, res) => {
-  const id = req.params.id;
-  const { userId } = req.body;
-  if (!id) throw new ApiError("organization id is required", 400);
+export const addUsers = asyncHandler(async (req, res) => {
+  const orgId = req.params.id;
+  const { email } = req.body;
+  if (!orgId) {
+    throw new ApiError("Organization id is required", 400);
+  }
 
-  const userJoined = await prisma.organizationMember.create({
+  if (!email) {
+    throw new ApiError("Email is required", 400);
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {email},
+    select: { id: true },
+  });
+
+  if (!user) {
+    throw new ApiError("User not found", 404);
+  }
+
+
+  const createdMember= await prisma.organizationMember.create({
     data: {
-      organizationId: id,
-      userId: userId,
+      userId: user.id,
+      organizationId: orgId,
       role:'member'
     },
-    select: { organizationId: true, userId: true },
   });
 
   await fgaClient.write({
-    writes: [{ user: `user:${userId}`, relation: 'member', object: `organization:${id}` }]
+    writes: [
+      {
+        user: `user:${user.id}`,
+        relation: "member",
+        object: `organization:${orgId}`,
+      },
+    ],
   });
 
-  return res.status(201).json(new ApiResponse(201, "user joined", userJoined));
+  return res.status(201).json(
+    new ApiResponse(201, "User added successfully", {
+      member: createdMember,
+    })
+  );
 });
 
 export const getOrganizationMembers = asyncHandler(async (req, res) => {
@@ -105,7 +131,7 @@ export const updateOrganization = asyncHandler(async (req, res) => {
   const { name } = req.body;
   const updatedOrg = await prisma.organization.update({
     where: { id },
-    data: { name },
+    data: { name:name.trim() },
     select: { id: true, name: true },
   });
   return res.status(200).json(new ApiResponse(200, "name updated", updatedOrg));
@@ -113,6 +139,7 @@ export const updateOrganization = asyncHandler(async (req, res) => {
 
 export const removeMember = asyncHandler(async (req, res) => {
   const { id, userId } = req.params;
+  if (!id) throw new ApiError("organization id is required", 400);
   const deletedMember = await prisma.organizationMember.delete({
     where: { userId_organizationId: { userId, organizationId: id } },select:{role:true}
   });
@@ -127,6 +154,28 @@ export const removeMember = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, "member removed", { userId }));
+});
+
+export const leaveOrg = asyncHandler(async (req, res) => {
+  
+  const { orgId } = req.params;
+  const userId = req.user.id;
+
+  if (!orgId) throw new ApiError("organization id is required", 400);
+  const deletedMember = await prisma.organizationMember.delete({
+    where: { userId_organizationId: { userId, organizationId: orgId } },select:{role:true}
+  });
+
+
+  await fgaClient.write({
+    deletes: [
+      { user: `user:${userId}`, relation: deletedMember.role, object: `organization:${orgId}` }
+    ]
+  });
+  
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "org leaved successfully", { userId }));
 });
 
 export const updateMemberRole = asyncHandler(async (req, res) => {
@@ -174,5 +223,35 @@ await fgaClient.write({
   return res
     .status(200)
     .json(new ApiResponse(200, "role updated", { id, userId, role }));
+});
+
+export const getOrgPermissions = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { id } = req.params;
+
+  if (!id) {
+    throw new ApiError("organization id is required", 400);
+  }
+
+  const [isAdmin, isMember] = await Promise.all([
+    fgaClient.check({
+      user: `user:${userId}`,
+      relation: "admin",
+      object: `organization:${id}`,
+    }),
+    fgaClient.check({
+      user: `user:${userId}`,
+      relation: "member",
+      object: `organization:${id}`,
+    }),
+  ]);
+
+  const permissions = {
+    canManageOrg: isAdmin.allowed,
+  };
+
+  return res.status(200).json(
+    new ApiResponse(200, "permissions fetched", permissions)
+  );
 });
 

@@ -1,5 +1,5 @@
 import express from 'express'
-import {registrationSchema, loginSchema} from '../schema/auth.schema.js'
+import {registrationSchema, loginSchema} from '../../../shared/index.js'
 import validate from '../middleware/validate.middleware.js'
 import { login, logout, me, register } from '../controllers/auth.controller.js';
 import authenticate from '../middleware/auth.middleware.js';
